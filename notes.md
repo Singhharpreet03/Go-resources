@@ -833,3 +833,306 @@ func main() {
 }
 ```
 
+# Struct
+
+A struct is a user-defined data type that groups together related data elements
+
+## Declaring a Struct
+
+```go
+type <struct_name> struct {
+    // list of fields
+}
+```
+example
+```go
+type Student struct {
+    name   string
+    rollNo int
+    marks  []int
+    grades map[string]int
+}
+```
+>No values are assigned during declaration, so each field is set to its default value (for example, zero for integers and an empty string for strings) until explicitly initialized.
+
+## Initializing a struct
+> **`%+v` is used to print all fields inside the struct using `fmt` package**
+1. using `var` keyword
+```go
+package main
+import "fmt"
+type Student struct {
+    name   string
+    rollNo int
+    marks  []int
+    grades map[string]int
+}
+func main() {
+    var s Student
+    fmt.Printf("%+v", s)
+}
+```
+> {name: rollNo:0 marks:[] grades:map[]}
+
+2. Using `new` keyword
+> it creates a pointer to the struct
+```go
+package main
+import "fmt"
+type Student struct {
+    name   string
+    rollNo int
+    marks  []int
+    grades map[string]int
+}
+
+func main() {
+    st := new(Student)
+    fmt.Printf("%+v", st) // st is a pointer to Student
+}
+```
+3. with a Struct Literal using Field Names
+
+```go
+package main
+import "fmt"
+type Student struct {
+    name   string
+    rollNo int
+}
+func main() {
+    st := Student{
+        name:   "Joe",
+        rollNo: 12,
+    }
+    fmt.Printf("%+v", st)
+}
+```
+
+4. with a Struct Literal Without Field Names
+```go
+package main
+import "fmt"
+type Student struct {
+    name   string
+    rollNo int
+}
+
+func main() {
+    st := Student{"Joe", 12}
+    fmt.Printf("%+v", st)
+}
+```
+
+## Accessing fields
+
+```go
+package main
+import "fmt"
+type Circle struct {
+    x int
+    y int
+    radius int
+}
+
+func main() {
+    var c Circle
+    c.x = 5
+    c.y = 5
+    c.radius = 5
+    fmt.Printf("%+v \n", c)
+}
+```
+## passing structs to functions
+> Passing by value means that modifications made inside the function do not alter the original struct. This is useful when you want to ensure the integrity of the initial data.
+
+```go
+package main
+import "fmt"
+
+type Circle struct {
+    x      int
+    y      int
+    radius float64
+    area   float64
+}
+
+func calcArea(c *Circle) {
+    const PI float64 = 3.14
+    var area float64
+    area = PI * c.radius * c.radius
+    (*c).area = area
+}
+
+func main() {
+    c := Circle{x: 5, y: 5, radius: 5, area: 0}
+    fmt.Printf("%+v \n", c)
+    // Passing the address of 'c' so that modifications affect the original variable.
+    calcArea(&c)
+    fmt.Printf("%+v \n", c)
+}
+```
+## Comparing Structs
+
+- Struct equality operators (== and !=) can only be utilized if both operands are of the same type.
+- Comparing structs of different types will result in a compile-time error.
+- When comparing structs of the same type, all corresponding fields must hold equal values for the structs to be considered equal.
+
+# Go Methods
+
+## Method Syntax
+A method in Go is like a function but has a **receiver parameter** (the instance it operates on):
+
+```go
+func (<receiver>) <method_name>(<params>) <return> {
+    // code
+}
+```
+
+## Pointer vs. Value Receivers
+- **Pointer Receiver (`*T`)**: Modifies the original struct.
+- **Value Receiver (`T`)**: Works on a copy, leaving the original unchanged.
+
+### Example: Pointer Receiver (Modifies Struct)
+```go
+func (c *Circle) calcArea() { c.area = 3.14 * c.radius * c.radius }
+```
+```go
+c := Circle{radius: 5}
+c.calcArea()
+fmt.Printf("%+v\n", c)  // {radius:5 area:78.5}
+```
+
+### Example: Value Receiver (No Modification)
+```go
+func (c Circle) calcArea() { c.area = 3.14 * c.radius * c.radius }
+```
+```go
+c := Circle{radius: 5}
+c.calcArea()
+fmt.Printf("%+v\n", c)  // {radius:5 area:0}
+```
+
+## Key Takeaway
+- Use **pointer receivers** when modifying the struct.
+- Use **value receivers** for read-only operations.
+# Go Method Sets
+
+## What are Method Sets?
+Method sets define the collection of methods associated with a type, allowing encapsulation and behavior definition.
+
+## Example: `Student` Struct
+```go
+// Student structure with name and grades
+ type Student struct {
+    name   string
+    grades []int
+ }
+
+// Method to display student name (Pointer Receiver)
+func (s *Student) displayName() { fmt.Println(s.name) }
+
+// Method to calculate average grade
+func (s *Student) calculatePercentage() float64 {
+    sum := 0
+    for _, grade := range s.grades { sum += grade }
+    return float64(sum) / float64(len(s.grades))
+}
+```
+
+## Using Methods in `main()`
+```go
+func main() {
+    s := Student{name: "Joe", grades: []int{90, 75, 80}}
+    s.displayName()
+    fmt.Printf("%.2f%%", s.calculatePercentage())
+}
+```
+**Expected Output:**
+```
+Joe
+81.67%
+```
+
+## Key Takeaway
+- **Method sets** help define behaviors for custom types.
+- **Essential for understanding interfaces in Go.**
+
+# Go Interfaces: Introduction & Implementation
+
+## What are Interfaces?
+Interfaces define a set of method signatures without implementations, allowing flexible and decoupled code design.
+
+## Defining an Interface
+```go
+type FixedDeposit interface {
+    getRateOfInterest() float64
+    calcReturn() float64
+}
+```
+- **`getRateOfInterest()`** → Returns interest rate.
+- **`calcReturn()`** → Computes the return.
+
+## Implicit Implementation
+A struct implements an interface **implicitly** by defining all required methods:
+
+```go
+type BankFD struct {
+    rate float64
+}
+
+func (b BankFD) getRateOfInterest() float64 { return b.rate }
+func (b BankFD) calcReturn() float64 { return b.rate * 1000 }
+```
+
+## Implementing Interfaces
+### Defining the Interface
+```go
+type shape interface {
+    area() float64
+    perimeter() float64
+}
+```
+- Any type implementing `area()` and `perimeter()` conforms to `shape`.
+
+### Implementing the Interface with a Square
+```go
+type square struct {
+    side float64
+}
+
+func (s square) area() float64 { return s.side * s.side }
+func (s square) perimeter() float64 { return 4 * s.side }
+```
+
+### Implementing the Interface with a Rectangle
+```go
+type rect struct {
+    length, breadth float64
+}
+
+func (r rect) area() float64 { return r.length * r.breadth }
+func (r rect) perimeter() float64 { return 2*r.length + 2*r.breadth }
+```
+
+### Using the Interface
+```go
+func printData(s shape) {
+    fmt.Println(s.area())
+    fmt.Println(s.perimeter())
+}
+
+func main() {
+    r := rect{length: 3, breadth: 4}
+    c := square{side: 5}
+
+    printData(r)
+    printData(c)
+}
+```
+
+## Key Takeaways
+- Interfaces in Go **do not require explicit implementation**.
+- They enable **modular and decoupled** code.
+- Types implement interfaces **implicitly** by defining matching method signatures.
+- A single function can operate on multiple types that share the same interface, increasing flexibility.
